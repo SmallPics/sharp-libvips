@@ -185,12 +185,20 @@ AOM_AS_FLAGS="${FLAGS}" cmake -G"Unix Makefiles" \
   ..
 make install/strip
 
+mkdir ${DEPS}/libde265
+$CURL https://github.com/strukturag/libde265/releases/download/v${VERSION_LIBDE265}/libde265-${VERSION_LIBDE265}.tar.gz | tar xzC ${DEPS}/libde265 --strip-components=1
+cd ${DEPS}/libde265
+CFLAGS="${CFLAGS} -O3" CXXFLAGS="${CXXFLAGS} -O3" cmake -G"Unix Makefiles" \
+  -DCMAKE_TOOLCHAIN_FILE=${ROOT}/Toolchain.cmake -DCMAKE_INSTALL_PREFIX=${TARGET} -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_BUILD_TYPE=Release \
+  -DBUILD_SHARED_LIBS=FALSE -DBUILD_TESTING=0 -DENABLE_PLUGIN_LOADING=0 -DWITH_EXAMPLES=0
+make install/strip
+
 mkdir ${DEPS}/heif
 $CURL https://github.com/strukturag/libheif/releases/download/v${VERSION_HEIF}/libheif-${VERSION_HEIF}.tar.gz | tar xzC ${DEPS}/heif --strip-components=1
 cd ${DEPS}/heif
 CFLAGS="${CFLAGS} -O3" CXXFLAGS="${CXXFLAGS} -O3" cmake -G"Unix Makefiles" \
   -DCMAKE_TOOLCHAIN_FILE=${ROOT}/Toolchain.cmake -DCMAKE_INSTALL_PREFIX=${TARGET} -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_BUILD_TYPE=Release \
-  -DBUILD_SHARED_LIBS=FALSE -DBUILD_TESTING=0 -DENABLE_PLUGIN_LOADING=0 -DWITH_EXAMPLES=0 -DWITH_LIBDE265=0 -DWITH_X265=0
+  -DBUILD_SHARED_LIBS=FALSE -DBUILD_TESTING=0 -DENABLE_PLUGIN_LOADING=0 -DWITH_EXAMPLES=0 -DWITH_LIBDE265=1 -DWITH_X265=0
 make install/strip
 
 mkdir ${DEPS}/jpeg
@@ -230,6 +238,14 @@ cd ${DEPS}/tiff
 CFLAGS="${CFLAGS} -pthread" ./configure --host=${CHOST} --prefix=${TARGET} --enable-static --disable-shared --disable-dependency-tracking \
   --disable-tools --disable-tests --disable-contrib --disable-docs --disable-mdi --disable-pixarlog --disable-old-jpeg --disable-cxx --disable-lzma --disable-zstd --disable-libdeflate
 make install-strip noinst_PROGRAMS= dist_doc_DATA=
+
+mkdir ${DEPS}/openjpeg
+$CURL https://github.com/uclouvain/openjpeg/archive/refs/tags/v${VERSION_OPENJPEG}.tar.gz | tar xzC ${DEPS}/openjpeg --strip-components=1
+cd ${DEPS}/openjpeg
+CFLAGS="${CFLAGS} -pthread -O3" CXXFLAGS="${CXXFLAGS} -O3" cmake -G"Unix Makefiles" \
+  -DCMAKE_TOOLCHAIN_FILE=${ROOT}/Toolchain.cmake -DCMAKE_INSTALL_PREFIX=${TARGET} -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_BUILD_TYPE=Release \
+  -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=0 -DBUILD_CODEC=OFF
+make install/strip
 
 if [ -z "$WITHOUT_HIGHWAY" ]; then
   mkdir ${DEPS}/hwy
@@ -349,6 +365,46 @@ CFLAGS="${CFLAGS} -O3" meson setup _build --default-library=static --buildtype=r
   -Dexamples=false -Dtests=false
 meson install -C _build --tag devel
 
+mkdir ${DEPS}/brotli
+$CURL https://github.com/google/brotli/archive/refs/tags/v${VERSION_BROTLI}.tar.gz | tar xzC ${DEPS}/brotli --strip-components=1
+cd ${DEPS}/brotli
+CFLAGS="${CFLAGS} -O3" cmake -G"Unix Makefiles" \
+  -DCMAKE_TOOLCHAIN_FILE=${ROOT}/Toolchain.cmake -DCMAKE_INSTALL_PREFIX=${TARGET} -DCMAKE_INSTALL_LIBDIR=lib \
+  -DBUILD_SHARED_LIBS=FALSE \
+  -DCMAKE_BUILD_TYPE=Release
+make install
+
+mkdir ${DEPS}/lcms2
+$CURL https://github.com/mm2/Little-CMS/archive/refs/tags/lcms${VERSION_LCMS2}.tar.gz | tar xzC ${DEPS}/lcms2 --strip-components=1
+cd ${DEPS}/lcms2
+# Disable utils
+sed -i'.bak' "/subdir('util')/d" meson.build
+meson setup _build --default-library=static --buildtype=release --strip --prefix=${TARGET} ${MESON}
+meson install -C _build --tag devel
+
+mkdir ${DEPS}/libjxl
+$CURL https://github.com/libjxl/libjxl/archive/refs/tags/v${VERSION_LIBJXL}.tar.gz | tar xzC ${DEPS}/libjxl --strip-components=1
+cd ${DEPS}/libjxl
+mkdir -p build
+cd build
+CFLAGS="${CFLAGS} -O3" cmake -G"Unix Makefiles" \
+  -DCMAKE_TOOLCHAIN_FILE=${ROOT}/Toolchain.cmake -DCMAKE_INSTALL_PREFIX=${TARGET} -DCMAKE_INSTALL_LIBDIR=lib \
+  -DBUILD_SHARED_LIBS=OFF \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DJPEGXL_ENABLE_FUZZERS=OFF \
+  -DJPEGXL_ENABLE_TOOLS=OFF \
+  -DJPEGXL_ENABLE_DOXYGEN=OFF \
+  -DJPEGXL_ENABLE_MANPAGES=OFF \
+  -DJPEGXL_ENABLE_BENCHMARK=OFF \
+  -DJPEGXL_ENABLE_EXAMPLES=OFF \
+  -DJPEGXL_ENABLE_SJPEG=OFF \
+  -DJPEGXL_ENABLE_OPENEXR=OFF \
+  -DJPEGXL_ENABLE_SKCMS=OFF \
+  -DJPEGXL_ENABLE_TRANSCODE_JPEG=OFF \
+  -DBUILD_TESTING=OFF \
+  ..
+make install
+
 mkdir ${DEPS}/uhdr
 $CURL https://github.com/google/libultrahdr/archive/${VERSION_UHDR}.tar.gz | tar xzC ${DEPS}/uhdr --strip-components=1
 cd ${DEPS}/uhdr
@@ -385,8 +441,8 @@ fi
 sed -i'.bak' "/subdir('man')/{N;N;N;N;d;}" meson.build
 CFLAGS="${CFLAGS} -O3" CXXFLAGS="${CXXFLAGS} -O3" meson setup _build --default-library=shared --buildtype=release --strip --prefix=${TARGET} ${MESON} \
   -Ddeprecated=false -Dexamples=false -Dauto_features=enabled -Dintrospection=disabled -Dmodules=disabled -Dcfitsio=disabled -Dfftw=disabled \
-  -Djpeg-xl=disabled ${WITHOUT_HIGHWAY:+-Dhighway=disabled} -Dorc=disabled -Dmagick=disabled -Dmatio=disabled -Dnifti=disabled -Dopenexr=disabled \
-  -Dopenjpeg=disabled -Dopenslide=disabled -Dpdfium=disabled -Dpoppler=disabled -Dquantizr=disabled -Draw=disabled -Dspng=disabled \
+  ${WITHOUT_HIGHWAY:+-Dhighway=disabled} -Dorc=disabled -Dmagick=disabled -Dmatio=disabled -Dnifti=disabled -Dopenexr=disabled \
+  -Dopenslide=disabled -Dpdfium=disabled -Dpoppler=disabled -Dquantizr=disabled \
   -Dppm=false -Danalyze=false -Dradiance=false \
   ${LINUX:+-Dcpp_link_args="$LDFLAGS -Wl,-Bsymbolic-functions -Wl,--version-script=$DEPS/vips/vips.map $EXCLUDE_LIBS"}
 meson install -C _build --tag runtime,devel
@@ -472,6 +528,8 @@ printf "{\n\
   \"webp\": \"${VERSION_WEBP}\",\n\
   \"xml2\": \"${VERSION_XML2}\",\n\
   \"zlib-ng\": \"${VERSION_ZLIB_NG}\"\n\
+  \"libjxl\": \"${VERSION_LIBJXL}\"\n\
+
 }" >versions.json
 
 # Add third-party notices
