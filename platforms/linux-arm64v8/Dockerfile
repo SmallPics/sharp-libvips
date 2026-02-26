@@ -1,28 +1,26 @@
-FROM --platform=linux/arm64 rockylinux:8
+FROM arm64v8/amazonlinux:2023
 LABEL maintainer="Lovell Fuller <npm@lovell.info>"
 
-# Create Rocky Linux 8 (glibc 2.28) container suitable for building Linux ARM64v8-A binaries
+# Create Amazon Linux 2023 (glibc 2.34) container suitable for building Linux ARM64v8-A binaries
 
 # Path settings
 ENV \
   RUSTUP_HOME="/usr/local/rustup" \
   CARGO_HOME="/usr/local/cargo" \
-  PATH="/usr/local/cargo/bin:/opt/rh/gcc-toolset-15/root/usr/bin:$PATH"
+  PATH="/usr/local/cargo/bin:$PATH"
 
 # Build dependencies
 RUN \
   dnf update -y && \
-  dnf install -y epel-release && \
-  dnf config-manager --set-enabled powertools && \
   dnf install -y --setopt=tsflags=nodocs \
     autoconf \
     automake \
     bzip2 \
     cmake \
     curl-devel \
-    findutils \
-    gcc-toolset-15-gcc \
-    gcc-toolset-15-gcc-c++ \
+    gcc \
+    gcc-c++ \
+    binutils \
     gettext \
     git \
     gperf \
@@ -30,8 +28,9 @@ RUN \
     make \
     openssl-devel \
     patch \
-    pkgconf \
-    python3.12-pip \
+    pkgconfig \
+    python3 \
+    python3-pip \
     tar \
     xz \
     && \
@@ -42,11 +41,11 @@ RUN \
     --default-toolchain nightly \
     && \
   cargo install cargo-c --locked && \
-  pip3.12 install meson ninja
+  pip3 install meson ninja tomli
 
 # Compiler settings
 ENV \
-  PKG_CONFIG="aarch64-linux-gnu-pkgconf --static" \
+  PKG_CONFIG="pkg-config --static" \
   PLATFORM="linux-arm64v8" \
   FLAGS="-march=armv8-a" \
   RUSTFLAGS="-Zlocation-detail=none -Zfmt-debug=none" \
@@ -54,4 +53,3 @@ ENV \
 
 COPY Toolchain.cmake /root/
 COPY meson.ini /root/
-COPY aarch64-linux-gnu-pkgconf /usr/bin
