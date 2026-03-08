@@ -1,6 +1,9 @@
 FROM arm64v8/amazonlinux:2023
 LABEL maintainer="Lovell Fuller <npm@lovell.info>"
 
+## Copyright 2017 Lovell Fuller and others.
+## SPDX-License-Identifier: Apache-2.0
+
 # Create Amazon Linux 2023 (glibc 2.34) container suitable for building Linux ARM64v8-A binaries
 
 # Path settings
