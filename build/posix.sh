@@ -529,9 +529,12 @@ printf "{\n\
   \"vips\": \"${VERSION_VIPS}\",\n\
   \"webp\": \"${VERSION_WEBP}\",\n\
   \"xml2\": \"${VERSION_XML2}\",\n\
-  \"zlib-ng\": \"${VERSION_ZLIB_NG}\"\n\
-  \"libjxl\": \"${VERSION_LIBJXL}\"\n\
-
+  \"zlib-ng\": \"${VERSION_ZLIB_NG}\",\n\
+  \"libde265\": \"${VERSION_LIBDE265}\",\n\
+  \"brotli\": \"${VERSION_BROTLI}\",\n\
+  \"lcms2\": \"${VERSION_LCMS2}\",\n\
+  \"libjxl\": \"${VERSION_LIBJXL}\",\n\
+  \"openjpeg\": \"${VERSION_OPENJPEG}\"\n\
 }" >versions.json
 
 # Add third-party notices

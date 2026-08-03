@@ -58,6 +58,11 @@ version_latest "uhdr" "$VERSION_UHDR" "375187"
 version_latest "webp" "$VERSION_WEBP" "1761"
 version_latest "xml2" "$VERSION_XML2" "1783"
 version_latest "zlib-ng" "$VERSION_ZLIB_NG" "115592"
+version_latest "libde265" "$VERSION_LIBDE265" "strukturag/libde265"
+version_latest "brotli" "$VERSION_BROTLI" "15235"
+version_latest "lcms2" "$VERSION_LCMS2" "9815"
+version_latest "libjxl" "$VERSION_LIBJXL" "libjxl/libjxl"
+version_latest "openjpeg" "$VERSION_OPENJPEG" "2550"
 
 if [ "$ALL_AT_VERSION_LATEST" = "false" ]; then
   echo "Dependency updates: ${UPDATES[*]}"
